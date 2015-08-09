@@ -1,0 +1,12 @@
+#!/bin/bash
+cd $OPENSHIFT_DATA_DIR
+
+if [[ -d sbt ]]; then
+  echo "SBT installed"
+else
+  wget https://dl.bintray.com/sbt/native-packages/sbt/0.13.11/sbt-0.13.11.tgz
+  tar -xvzf sbt-0.13.11.tgz
+  rm sbt-0.13.11.tgz
+fi
+
+
