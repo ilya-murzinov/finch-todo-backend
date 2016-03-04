@@ -17,10 +17,24 @@ import io.finch.circe._
 object Main {
 
   val postedTodo: Endpoint[Todo] =
-    body.as[UUID => Todo].map(_(UUID.randomUUID()))
+    body.as[Todo => Todo].map { f =>
+      f(Todo(
+        id = UUID.randomUUID(),
+        title = "",
+        completed = false,
+        order = 1
+      ))
+    }
 
   val getTodos: Endpoint[List[Todo]] = get("todos") {
     Ok(Todo.list())
+  }
+
+  val getTodo: Endpoint[Todo] = get("todos" :: uuid) { id: UUID =>
+    Todo.get(id) match {
+      case Some(t) => Ok(t)
+      case None => throw TodoNotFound(id)
+    }
   }
 
   val postTodo: Endpoint[Todo] = post("todos" :: postedTodo) { t: Todo =>
@@ -63,7 +77,7 @@ object Main {
   }
 
   val api: Service[Request, Response] = (
-    getTodos :+: postTodo :+: deleteTodo :+: deleteTodos :+: patchTodo :+: opts
+    getTodo :+: getTodos :+: postTodo :+: deleteTodo :+: deleteTodos :+: patchTodo :+: opts
   ).handle({
     case e: TodoNotFound => NotFound(e)
   }).withHeader(
