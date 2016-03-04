@@ -3,4 +3,4 @@
 # script. The application will work only if it binds to
 # $OPENSHIFT_DIY_IP:8080
 cd $OPENSHIFT_REPO_DIR
-nohup java -jar -Dhttp.host=$OPENSHIFT_DIY_IP -Dhttp.port=$OPENSHIFT_DIY_PORT target/scala-2.11/finch-todo-backend-assembly-1.0.jar > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &
+nohup java -jar -Dexternal.url='http://diy-ilyamurzinov.rhcloud.com' -Dhttp.host=$OPENSHIFT_DIY_IP -Dhttp.port=$OPENSHIFT_DIY_PORT target/scala-2.11/finch-todo-backend-assembly-1.0.jar > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &

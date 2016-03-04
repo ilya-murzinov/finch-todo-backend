@@ -8,4 +8,4 @@
 #           The README file is actually ignored due to the entry in the
 #           jobs.deny which is checked before jobs.allow (this file).
 #
-ping_self.sh
+ping

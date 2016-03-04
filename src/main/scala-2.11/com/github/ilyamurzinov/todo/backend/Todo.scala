@@ -4,7 +4,7 @@ import java.util.UUID
 
 import scala.collection.mutable
 
-case class Todo(id: UUID, title: String, completed: Boolean, order: Int)
+case class Todo(id: UUID, title: String, completed: Boolean, order: Int, url: String)
 
 object Todo {
   private[this] val db: mutable.Map[UUID, Todo] = mutable.Map.empty[UUID, Todo]

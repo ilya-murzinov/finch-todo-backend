@@ -10,21 +10,13 @@ import io.finch._
 import io.finch.circe._
 
 /**
-  * TODO
+  * Backend for TODO application
+  * See [[http://www.todobackend.com/ TODO backend website]],
+  * [[http://www.todobackend.com/specs/index.html Specification]]
   *
   * @author Murzinov Ilya [murz42@gmail.com]
   */
 object Main {
-
-  val postedTodo: Endpoint[Todo] =
-    body.as[Todo => Todo].map { f =>
-      f(Todo(
-        id = UUID.randomUUID(),
-        title = "",
-        completed = false,
-        order = 1
-      ))
-    }
 
   val getTodos: Endpoint[List[Todo]] = get("todos") {
     Ok(Todo.list())
@@ -37,11 +29,24 @@ object Main {
     }
   }
 
-  val postTodo: Endpoint[Todo] = post("todos" :: postedTodo) { t: Todo =>
-    Todo.save(t)
+  def postedTodo(baseUrl: String): Endpoint[Todo] =
+    body.as[Todo => Todo].map { f =>
+      val id = UUID.randomUUID
+      f(Todo(
+        id = id,
+        title = "",
+        completed = false,
+        order = 1,
+        url = s"$baseUrl/todos/$id"
+      ))
+    }
 
-    Created(t)
-  }
+  def postTodo(baseUrl: String): Endpoint[Todo] =
+    post("todos" :: postedTodo(baseUrl)) { t: Todo =>
+      Todo.save(t)
+
+      Created(t)
+    }
 
   val deleteTodo: Endpoint[Todo] = delete("todos" :: uuid) { id: UUID =>
     Todo.get(id) match {
@@ -76,8 +81,8 @@ object Main {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 
-  val api: Service[Request, Response] = (
-    getTodo :+: getTodos :+: postTodo :+: deleteTodo :+: deleteTodos :+: patchTodo :+: opts
+  def api(baseUrl: String): Service[Request, Response] = (
+    getTodo :+: getTodos :+: postTodo(baseUrl) :+: deleteTodo :+: deleteTodos :+: patchTodo :+: opts
   ).handle({
     case e: TodoNotFound => NotFound(e)
   }).withHeader(
@@ -106,7 +111,10 @@ object Main {
     val host = Option(System.getProperty("http.host")).getOrElse("0.0.0.0")
     val port = Option(System.getProperty("http.port")).getOrElse("8081")
 
-    val server = Http.server.serve(s"$host:$port", api)
+    val internalUrl: String = s"$host:$port"
+    val externalUrl = Option(System.getProperty("external.url")).getOrElse(s"http://$internalUrl")
+
+    val server = Http.server.serve(internalUrl, api(externalUrl))
 
     Await.ready(server)
   }
