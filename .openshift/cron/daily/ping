@@ -1,4 +1,0 @@
-#!/bin/bash
-
-echo 'Pinging self to keep alive...' > ${OPENSHIFT_LOG_DIR}cron.log
-curl http://diy-ilyamurzinov.rhcloud.com/
