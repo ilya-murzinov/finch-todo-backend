@@ -16,12 +16,11 @@ import scala.util.{Failure, Success}
   *
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object TodoRepo {
+object TodoRepo extends Config {
   import com.github.ilyamurzinov.todo.backend.Todo._
 
-  val connString = Option(System.getProperty("mongo.connection")).getOrElse("mongodb://localhost:27017/")
-  val dbName = Option(System.getProperty("mongo.db.name")).getOrElse("todoBackend")
-  val uri = connString + dbName
+  val dbName = dbConfig.getString("dbName")
+  val uri = dbConfig.getString("uri")
 
   val driver: MongoDriver = new MongoDriver
   val connection: MongoConnection = MongoConnection.parseURI(uri) match {

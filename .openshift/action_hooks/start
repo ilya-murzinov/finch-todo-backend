@@ -1,6 +1,4 @@
 #!/bin/bash
-# The logic to start up your application should be put in this
-# script. The application will work only if it binds to
-# $OPENSHIFT_DIY_IP:8080
+
 cd $OPENSHIFT_REPO_DIR
-nohup java -jar -Dexternal.url='http://diy-ilyamurzinov.rhcloud.com' -Dhttp.host=$OPENSHIFT_DIY_IP -Dhttp.port=$OPENSHIFT_DIY_PORT -Dmongo.connection=$OPENSHIFT_MONGODB_DB_URL -Dmongo.db.name=$OPENSHIFT_APP_NAME target/finch-todo-backend.jar > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &
+nohup java -jar -Denv=openshift target/finch-todo-backend.jar > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &

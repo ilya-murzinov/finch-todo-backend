@@ -15,7 +15,8 @@ libraryDependencies ++= Seq(
   "io.circe" %% "circe-generic" % circeVersion,
   "org.reactivemongo" %% "reactivemongo" % reactiveMongoVersion,
   "ch.qos.logback" % "logback-classic" % "1.1.2",
-  "com.twitter" %% "bijection-util" % "0.8.1"
+  "com.twitter" %% "bijection-util" % "0.8.1",
+  "com.typesafe" % "config" % "1.2.1"
 )
 
 target := file("/tmp/sbt") / name.value

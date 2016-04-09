@@ -16,11 +16,11 @@ import io.finch.circe._
   *
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object Main {
-  val host = Option(System.getProperty("http.host")).getOrElse("0.0.0.0")
-  val port = Option(System.getProperty("http.port")).getOrElse("8081")
+object Main extends Config {
+  val host = serverConfig.getString("host")
+  val port = serverConfig.getString("port")
   val internalUrl: String = s"$host:$port"
-  val externalUrl = Option(System.getProperty("external.url")).getOrElse(s"http://$internalUrl")
+  val externalUrl = serverConfig.getString("externalUrl")
 
   val getTodos: Endpoint[List[Todo]] = get("todos") {
     Ok(TodoRepo.list())
