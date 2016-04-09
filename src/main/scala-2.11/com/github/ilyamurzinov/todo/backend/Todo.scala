@@ -12,7 +12,7 @@ object Todo {
       bson.getAs[String]("_id").map(UUID.fromString) match {
         case Some(id) => Todo(
           id = id,
-          title = bson.getAs[String]("").getOrElse(""),
+          title = bson.getAs[String]("title").getOrElse(""),
           completed = bson.getAs[Boolean]("completed").getOrElse(false),
           order = bson.getAs[Int]("order").getOrElse(0),
           url = bson.getAs[String]("url").getOrElse("")
