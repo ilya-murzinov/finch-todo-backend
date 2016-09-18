@@ -3,10 +3,14 @@ package com.github.ilyamurzinov.todo.backend
 import java.util.UUID
 
 import com.github.ilyamurzinov.todo.backend.dsl._
+import com.github.ilyamurzinov.todo.backend.dsl.logic._
 import com.github.ilyamurzinov.todo.backend.dsl.logic.TodoAction._
+import com.github.ilyamurzinov.todo.backend.dsl.logging._
+import com.github.ilyamurzinov.todo.backend.dsl.logging.LogAction._
 import com.github.ilyamurzinov.todo.backend.interpreters.TodoInterpreter
 
-import cats.data.Xor
+import cats.data.{Coproduct, Xor}
+import cats.free.Free
 import com.twitter.finagle.{Http, Service}
 import com.twitter.finagle.http.{Request, Response}
 import com.twitter.util.Await
@@ -14,7 +18,6 @@ import com.twitter.util.Future
 import io.circe.generic.auto._
 import io.finch._
 import io.finch.circe._
-import io.catbird.util._
 
 /**
   * Backend for TODO application
@@ -29,18 +32,24 @@ object Main extends Config {
   val internalUrl: String = s"$host:$port"
   val externalUrl = serverConfig.getString("externalUrl")
 
-  type TodoEndpoint[T] = Endpoint[TodoF[Output[T]]]
+  type TodoEndpoint[T] = Endpoint[Free[TodoApp, Output[T]]]
+
+  val L: LogI[TodoApp] = implicitly
+  val T: TodoI[TodoApp] = implicitly
+  import L._
+  import T._
 
   val getTodosEndpoint: TodoEndpoint[List[Todo]] = get("todos").map { _ =>
     for {
-      list <- getAllTodos
+      _ <- infoI("getting all todos")
+      list <- getAllTodosI
     } yield Ok(list)
   }
 
   val getTodoEndpoint: TodoEndpoint[TodoNotFound Xor Todo] =
     get("todos" :: uuid).map { id: UUID =>
       for {
-        t <- getTodo(id)
+        t <- getTodoI(id)
       } yield Ok(Xor.fromOption(t, TodoNotFound(id)))
     }
 
@@ -94,12 +103,9 @@ object Main extends Config {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 
-  def interpret[T](action: TodoF[T]): Future[T] =
-    action.foldMap(TodoInterpreter.interpreter)
-
   val api: Service[Request, Response] = (
-    getTodosEndpoint.mapOutputAsync(interpret) :+:
-      getTodoEndpoint.mapOutputAsync(interpret) // :+:
+    getTodosEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
+      getTodoEndpoint.mapOutputAsync(TodoInterpreter.interpret) // :+:
     // postTodo :+:
     // deleteTodo :+:
     // deleteTodos.mapOutputAsync(interpret) :+:

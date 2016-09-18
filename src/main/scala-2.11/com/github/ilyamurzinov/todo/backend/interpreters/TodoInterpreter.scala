@@ -8,7 +8,8 @@ import com.github.ilyamurzinov.todo.backend.dsl.logic._
 import com.github.ilyamurzinov.todo.backend.Config
 
 import cats.~>
-import com.twitter.bijection.twitter_util._
+import cats.free.Free
+import io.catbird.util._
 import com.twitter.util.Future
 
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -27,5 +28,7 @@ object TodoInterpreter {
         }
     }
 
-  val interpreter: TodoAction ~> Future = logicInterpreter andThen InMemoryStorageInterpreter.interpreter
+  val interpreter = (logicInterpreter andThen InMemoryStorageInterpreter.interpreter) or LoggingInterpreter.interpreter
+
+  def interpret[T](action: Free[TodoApp, T]): Future[T] = action.foldMap(interpreter)
 }
