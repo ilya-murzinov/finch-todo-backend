@@ -25,7 +25,7 @@ import scala.util.{Failure, Success}
   *
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object MongoInterpreter extends Config {
+object MongoStorageInterpreter extends Config {
   implicit val reader: BSONDocumentReader[Todo] =
     new BSONDocumentReader[Todo] {
       override def read(bson: BSONDocument): Todo =

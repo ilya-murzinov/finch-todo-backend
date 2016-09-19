@@ -30,5 +30,6 @@ object TodoInterpreter {
 
   val interpreter = (logicInterpreter andThen InMemoryStorageInterpreter.interpreter) or LoggingInterpreter.interpreter
 
-  def interpret[T](action: Free[TodoApp, T]): Future[T] = action.foldMap(interpreter)
+  def interpret[T](action: Free[TodoApp, T]): Future[T] =
+    action.foldMap(interpreter)
 }

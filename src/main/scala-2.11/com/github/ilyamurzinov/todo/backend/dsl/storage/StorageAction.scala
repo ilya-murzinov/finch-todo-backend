@@ -1,8 +1,10 @@
 package com.github.ilyamurzinov.todo.backend.dsl.storage
 
-import com.github.ilyamurzinov.todo.backend.dsl._
-import cats.free.Free.liftF
 import java.util.UUID
+
+import com.github.ilyamurzinov.todo.backend.dsl._
+
+import cats.free.Free.liftF
 
 sealed trait StorageAction[T]
 

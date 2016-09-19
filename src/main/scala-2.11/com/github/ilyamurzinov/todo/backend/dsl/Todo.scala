@@ -9,3 +9,4 @@ case class Todo(id: UUID,
                 url: String)
 
 case class TodoNotFound(id: UUID)
+    extends Exception(s"Todo with id '$id' not found")

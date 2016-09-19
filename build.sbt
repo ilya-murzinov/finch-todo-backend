@@ -6,15 +6,18 @@ scalaVersion := "2.11.7"
 lazy val finchVersion = "0.11.0-M3"
 lazy val catsVersion = "0.7.2"
 lazy val circeVersion = "0.5.1"
+lazy val twitterServerVersion = "1.23.0"
 lazy val reactiveMongoVersion = "0.11.11"
 
 resolvers += Resolver.sonatypeRepo("snapshots")
+resolvers += "Twitter Maven" at "http://maven.twttr.com"
 
 libraryDependencies ++= Seq(
   "org.typelevel" %% "cats-core" % catsVersion,
   "org.typelevel" %% "cats-free" % catsVersion,
   "com.github.finagle" %% "finch-core" % finchVersion,
   "com.github.finagle" %% "finch-circe" % finchVersion,
+  "com.twitter" %% "twitter-server" % twitterServerVersion,
   "io.circe" %% "circe-generic" % circeVersion,
   "org.reactivemongo" %% "reactivemongo" % reactiveMongoVersion,
   "ch.qos.logback" % "logback-classic" % "1.1.2",

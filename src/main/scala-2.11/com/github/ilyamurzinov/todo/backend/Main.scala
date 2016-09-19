@@ -4,15 +4,15 @@ import java.util.UUID
 
 import com.github.ilyamurzinov.todo.backend.dsl._
 import com.github.ilyamurzinov.todo.backend.dsl.logic._
-import com.github.ilyamurzinov.todo.backend.dsl.logic.TodoAction._
 import com.github.ilyamurzinov.todo.backend.dsl.logging._
-import com.github.ilyamurzinov.todo.backend.dsl.logging.LogAction._
 import com.github.ilyamurzinov.todo.backend.interpreters.TodoInterpreter
 
 import cats.data.{Coproduct, Xor}
 import cats.free.Free
 import com.twitter.finagle.{Http, Service}
 import com.twitter.finagle.http.{Request, Response}
+import com.twitter.finagle.http.filter.Cors
+import com.twitter.server.TwitterServer
 import com.twitter.util.Await
 import com.twitter.util.Future
 import io.circe.generic.auto._
@@ -26,7 +26,7 @@ import io.finch.circe._
   *
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object Main extends Config {
+object Main extends TwitterServer with Config {
   val host = serverConfig.getString("host")
   val port = serverConfig.getString("port")
   val internalUrl: String = s"$host:$port"
@@ -46,98 +46,82 @@ object Main extends Config {
     } yield Ok(list)
   }
 
-  val getTodoEndpoint: TodoEndpoint[TodoNotFound Xor Todo] =
+  val getTodoEndpoint: TodoEndpoint[Todo] =
     get("todos" :: uuid).map { id: UUID =>
       for {
         t <- getTodoI(id)
-      } yield Ok(Xor.fromOption(t, TodoNotFound(id)))
+      } yield Xor.fromOption(t, TodoNotFound(id)).fold(BadRequest, Ok)
     }
 
-  // def postedTodo(baseUrl: String): Endpoint[Todo] =
-  //   body.as[Todo => Todo].map { f =>
-  //     val id = UUID.randomUUID
-  //     f(Todo(
-  //       id = id,
-  //       title = "",
-  //       completed = false,
-  //       order = 1,
-  //       url = s"$baseUrl/todos/$id"
-  //     ))
+  val postTodo: TodoEndpoint[Todo] =
+    post("todos" :: postedTodo(externalUrl)).map { t: Todo =>
+      for {
+        t <- saveTodoI(t)
+      } yield Ok(t)
+    }
+
+  // val patchTodo: TodoEndpoint[Todo] =
+  //   patch("todos" :: uuid :: patchedTodo).map { (id: UUID, pt: Todo => Todo) =>
+  //     for {
+  //       t <- patchTodoI(id, pt)
+  //     } yield Xor.fromOption(t, TodoNotFound(id)).fold(BadRequest, Ok)
   //   }
 
-  // val postTodo: Endpoint[Todo] =
-  //   post("todos" :: postedTodo(externalUrl)) { t: Todo =>
-  //     TodoRepo.save(t)
-  //     Created(t)
-  //   }
+  val deleteTodo: TodoEndpoint[Todo] = delete("todos" :: uuid).map {
+    id: UUID =>
+      for {
+        t <- deleteTodoI(id)
+      } yield Xor.fromOption(t, TodoNotFound(id)).fold(BadRequest, Ok)
+  }
 
-  // val deleteTodo: Endpoint[Todo] = delete("todos" :: uuid) { id: UUID =>
-  //   TodoRepo.get(id).map {
-  //     case Some(t) => TodoRepo.delete(id); Ok(t)
-  //     case None => throw new TodoNotFound(id)
-  //   }
-  // }
+  val deleteTodos: TodoEndpoint[List[Todo]] = delete("todos").map { _ =>
+    for {
+      list <- deleteAllTodosI
+    } yield Ok(list)
+  }
 
-  // val deleteTodos: TodoEndpoint[List[Todo]] = delete("todos").map { _ =>
-  //   for {
-  //     list <- getAll
-  //   } yield Ok(list)
-  // }
+  def postedTodo(baseUrl: String): Endpoint[Todo] =
+    body.as[Todo => Todo].map { f =>
+      val id = UUID.randomUUID
+      f(
+        Todo(
+          id = id,
+          title = "",
+          completed = false,
+          order = 1,
+          url = s"$baseUrl/todos/$id"
+        ))
+    }
 
-  // val patchedTodo: Endpoint[Todo => Todo] = body.as[Todo => Todo]
-
-  // val patchTodo: Endpoint[Todo] =
-  //   patch("todos" :: uuid :: patchedTodo) { (id: UUID, pt: Todo => Todo) =>
-  //     TodoRepo.get(id).map {
-  //       case Some(currentTodo) =>
-  //         val newTodo: Todo = pt(currentTodo)
-  //         TodoRepo.delete(id)
-  //         TodoRepo.save(newTodo)
-
-  //         Ok(newTodo)
-  //       case None => throw TodoNotFound(id)
-  //     }
-  //   }
+  val patchedTodo: Endpoint[Todo => Todo] = body.as[Todo => Todo]
 
   val opts: Endpoint[Unit] = options(*) {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 
-  val api: Service[Request, Response] = (
-    getTodosEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
-      getTodoEndpoint.mapOutputAsync(TodoInterpreter.interpret) // :+:
-    // postTodo :+:
-    // deleteTodo :+:
-    // deleteTodos.mapOutputAsync(interpret) :+:
-    // patchTodo :+:
-    // opts
-  ).withHeader(
-      ("Access-Control-Allow-Origin", "*")
-    )
-    .withHeader(
-      ("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PATCH")
-    )
-    .withHeader(
-      ("Access-Control-Max-Age", "3600")
-    )
-    .withHeader(
-      (
-        "Access-Control-Allow-Headers",
-        """Content-Type,
-        |Cache-Control,
-        |Content-Language,
-        |Expires,
-        |Last-Modified,
-        |Pragma,
-        |X-Requested-With,
-        |Origin,
-        |Accept
-      """.stripMargin.filter(_ >= ' ')
-      )
-    )
-    .toService
+  val service: Service[Request, Response] =
+    (getTodosEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
+      getTodoEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
+        postTodo.mapOutputAsync(TodoInterpreter.interpret) :+:
+          deleteTodo.mapOutputAsync(TodoInterpreter.interpret) :+:
+            deleteTodos.mapOutputAsync(TodoInterpreter.interpret) :+:
+              // patchTodo :+:
+              opts).toService
 
-  def main(args: Array[String]): Unit = {
-    Await.ready(Http.server.serve(internalUrl, api))
+  val policy: Cors.Policy = Cors.Policy(
+    allowsOrigin = _ => Some("*"),
+    allowsMethods = _ => Some(Seq("GET", "POST", "OPTIONS", "DELETE", "PATCH")),
+    allowsHeaders = _ => Some(Seq("Accept"))
+  )
+
+  val api: Service[Request, Response] =
+    new Cors.HttpFilter(policy).andThen(service)
+
+  def main(): Unit = {
+    val server = Http.server.serve(internalUrl, api)
+
+    onExit { server.close() }
+
+    Await.ready(server)
   }
 }
