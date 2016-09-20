@@ -68,14 +68,6 @@ object MongoStorageInterpreter extends Config {
 
   private[this] def byId(id: UUID) = BSONDocument("_id" -> id.toString)
 
-  private[this] def save(t: Todo): Unit = {
-    collection.insert[Todo](t)
-  }
-
-  private[this] def delete(id: UUID): Unit = {
-    collection.remove(byId(id))
-  }
-
   val interpreter: StorageAction ~> Future = new (StorageAction ~> Future) {
     override def apply[A](action: StorageAction[A]): Future[A] =
       action match {
@@ -91,6 +83,21 @@ object MongoStorageInterpreter extends Config {
             .twitter2ScalaFuture[Option[Todo]]
             .invert(
               collection.find(byId(id)).one[Todo]
+            )
+        }
+        case SaveTodo(todo: Todo) => {
+          collection.insert[Todo](todo)
+          Future.value(())
+        }
+        case DeleteTodo(id) => {
+          collection.remove(byId(id))
+          Future.value(())
+        }
+        case DeleteAllTodos => {
+          UtilBijections
+            .twitter2ScalaFuture[Unit]
+            .invert(
+              collection.drop()
             )
         }
       }

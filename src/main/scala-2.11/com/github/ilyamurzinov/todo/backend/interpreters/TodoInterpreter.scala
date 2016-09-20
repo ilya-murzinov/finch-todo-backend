@@ -19,12 +19,31 @@ import scala.util.{Failure, Success}
   * @author Murzinov Ilya [murz42@gmail.com]
   */
 object TodoInterpreter {
-  private[this] val logicInterpreter: TodoAction ~> StorageAction =
-    new (TodoAction ~> StorageAction) {
-      override def apply[A](action: TodoAction[A]): StorageAction[A] =
+  private[this] val logicInterpreter: TodoAction ~> StorageF =
+    new (TodoAction ~> StorageF) {
+      override def apply[A](action: TodoAction[A]): StorageF[A] =
         action match {
-          case logic.GetAllTodos => storage.GetAllTodos
-          case logic.GetTodo(id: UUID) => storage.GetTodo(id)
+          case logic.GetAllTodos => StorageAction.getTodos
+          case logic.GetTodo(id) => StorageAction.getTodo(id)
+          case logic.SaveTodo(todo) =>
+            for {
+              _ <- StorageAction.saveTodo(todo)
+            } yield todo
+          case logic.PatchTodo(id, f) =>
+            for {
+              o <- StorageAction.getTodo(id)
+              _ <- StorageAction.saveTodo(f(o.getOrElse(null)))
+            } yield Some(f(o.getOrElse(null)))
+          case logic.DeleteTodo(id) =>
+            for {
+              t <- StorageAction.getTodo(id)
+              _ <- StorageAction.deleteTodo(id)
+            } yield t
+          case logic.DeleteAllTodos =>
+            for {
+              l <- StorageAction.getTodos
+              _ <- StorageAction.deleteAllTodos
+            } yield l
         }
     }
 
