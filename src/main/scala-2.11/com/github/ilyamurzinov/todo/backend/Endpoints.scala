@@ -62,10 +62,11 @@ trait Endpoints {
   val patchedTodo: Endpoint[Todo => Todo] = body.as[Todo => Todo]
 
   val patchTodo: TodoEndpoint[Todo] =
-    patch("todos" :: uuid :: patchedTodo).map { case id :: pt :: HNil =>
-      for {
-        t <- patchTodoI(id, pt)
-      } yield Xor.fromOption(t, TodoNotFound(id)).fold(BadRequest, Ok)
+    patch("todos" :: uuid :: patchedTodo).map {
+      case id :: pt :: HNil =>
+        for {
+          t <- patchTodoI(id, pt)
+        } yield Xor.fromOption(t, TodoNotFound(id)).fold(BadRequest, Ok)
     }
 
   val deleteTodo: TodoEndpoint[Todo] = delete("todos" :: uuid).map {

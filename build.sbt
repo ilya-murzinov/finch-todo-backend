@@ -39,3 +39,11 @@ val validateCommands = List(
 addCommandAlias("validate", validateCommands.mkString(";", ";", ""))
 
 target := file("/tmp/sbt") / name.value
+
+mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+  {
+    case PathList("META-INF", "io.netty.versions.properties") =>
+      MergeStrategy.first
+    case x => old(x)
+  }
+}
