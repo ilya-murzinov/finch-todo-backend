@@ -32,13 +32,17 @@ object TodoInterpreter {
           case logic.PatchTodo(id, f) =>
             for {
               o <- StorageAction.getTodo(id)
-              _ <- StorageAction.saveTodo(f(o.getOrElse(null)))
-            } yield Some(f(o.getOrElse(null)))
+              _ <- o
+                .map(t => StorageAction.saveTodo(f(t)))
+                .getOrElse(StorageAction.noAction)
+            } yield o.map(f(_))
           case logic.DeleteTodo(id) =>
             for {
-              t <- StorageAction.getTodo(id)
-              _ <- StorageAction.deleteTodo(id)
-            } yield t
+              o <- StorageAction.getTodo(id)
+              _ <- o
+                .map(t => StorageAction.deleteTodo(id))
+                .getOrElse(StorageAction.noAction)
+            } yield o
           case logic.DeleteAllTodos =>
             for {
               l <- StorageAction.getTodos

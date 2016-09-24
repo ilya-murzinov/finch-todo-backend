@@ -24,6 +24,7 @@ object InMemoryStorageInterpreter {
     new (StorageAction ~> Future) {
       override def apply[A](action: StorageAction[A]): Future[A] =
         action match {
+          case NoAction => Future.value(())
           case GetAllTodos => Future.value(storage.values.toList)
           case GetTodo(id) => Future.value(storage.get(id))
           case SaveTodo(todo: Todo) => {

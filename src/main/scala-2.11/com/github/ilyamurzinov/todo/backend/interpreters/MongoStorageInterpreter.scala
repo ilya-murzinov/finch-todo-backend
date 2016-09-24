@@ -71,6 +71,7 @@ object MongoStorageInterpreter extends Config {
   val interpreter: StorageAction ~> Future = new (StorageAction ~> Future) {
     override def apply[A](action: StorageAction[A]): Future[A] =
       action match {
+        case NoAction => Future.value(())
         case GetAllTodos => {
           UtilBijections
             .twitter2ScalaFuture[List[Todo]]
