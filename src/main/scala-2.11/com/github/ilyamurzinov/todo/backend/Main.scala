@@ -2,19 +2,10 @@ package com.github.ilyamurzinov.todo.backend
 
 import java.util.UUID
 
-import com.github.ilyamurzinov.todo.backend.dsl._
-import com.github.ilyamurzinov.todo.backend.dsl.logic._
-import com.github.ilyamurzinov.todo.backend.dsl.logging._
-import com.github.ilyamurzinov.todo.backend.interpreters.TodoInterpreter
-
-import cats.data.{Coproduct, Xor}
-import cats.free.Free
 import com.twitter.finagle.{Http, Service}
 import com.twitter.finagle.http.{Request, Response}
-import com.twitter.finagle.http.filter.Cors
 import com.twitter.server.TwitterServer
 import com.twitter.util.Await
-import com.twitter.util.Future
 import io.circe.generic.auto._
 import io.finch._
 import io.finch.circe._
@@ -32,14 +23,32 @@ object Main extends TwitterServer with Endpoints with Config {
   val internalUrl: String = s"$host:$port"
   val externalUrl = serverConfig.getString("externalUrl")
 
-  val policy: Cors.Policy = Cors.Policy(
-    allowsOrigin = _ => Some("*"),
-    allowsMethods = _ => Some(Seq("GET", "POST", "OPTIONS", "DELETE", "PATCH")),
-    allowsHeaders = _ => Some(Seq("Accept"))
-  )
-
-  val api: Service[Request, Response] =
-    new Cors.HttpFilter(policy).andThen(service(externalUrl))
+  val api: Service[Request, Response] = endpoint(externalUrl)
+    .withHeader(
+      ("Access-Control-Allow-Origin", "*")
+    )
+    .withHeader(
+      ("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PATCH")
+    )
+    .withHeader(
+      ("Access-Control-Max-Age", "3600")
+    )
+    .withHeader(
+      (
+        "Access-Control-Allow-Headers",
+        """Content-Type,
+        |Cache-Control,
+        |Content-Language,
+        |Expires,
+        |Last-Modified,
+        |Pragma,
+        |X-Requested-With,
+        |Origin,
+        |Accept
+      """.stripMargin.filter(_ >= ' ')
+      )
+    )
+    .toService
 
   def main(): Unit = {
     val server = Http.server.serve(internalUrl, api)

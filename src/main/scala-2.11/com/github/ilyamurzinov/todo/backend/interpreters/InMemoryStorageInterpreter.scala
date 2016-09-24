@@ -27,11 +27,11 @@ object InMemoryStorageInterpreter {
           case GetAllTodos => Future.value(storage.values.toList)
           case GetTodo(id) => Future.value(storage.get(id))
           case SaveTodo(todo: Todo) => {
-            storage + (todo.id -> todo)
+            storage = storage + (todo.id -> todo)
             Future.value(())
           }
           case DeleteTodo(id) => {
-            storage - id
+            storage = storage - id
             Future.value(())
           }
           case DeleteAllTodos => {
