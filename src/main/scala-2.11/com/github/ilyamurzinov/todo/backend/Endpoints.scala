@@ -68,7 +68,9 @@ trait Endpoints {
         for {
           _ <- infoI(s"Patching Todo with id $id")
           o <- patchTodoI(id, pt)
-          _ <- infoI(o.map { t => s"Patched Todo: ${s.show(t)}" }.getOrElse(s"Not patched Todo with id $id"))
+          _ <- infoI(o.map { t =>
+            s"Patched Todo: ${s.show(t)}"
+          }.getOrElse(s"Not patched Todo with id $id"))
         } yield Xor.fromOption(o, TodoNotFound(id)).fold(NotFound, Ok)
     }
 
