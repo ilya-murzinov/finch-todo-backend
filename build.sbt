@@ -26,7 +26,10 @@ libraryDependencies ++= Seq(
 )
 
 mainClass in (Compile, run) := Some(
-  "com.github.ilyamurzinov.todo.backend.Main")
+  "com.github.ilyamurzinov.todo.backend.Main"
+)
+
+scalafmtConfig in ThisBuild := Some(file(".scalafmt"))
 
 val validateCommands = List(
   "clean",

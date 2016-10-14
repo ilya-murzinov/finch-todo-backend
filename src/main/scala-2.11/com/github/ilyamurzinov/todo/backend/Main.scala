@@ -24,19 +24,12 @@ object Main extends TwitterServer with Endpoints with Config {
   val externalUrl = serverConfig.getString("externalUrl")
 
   val api: Service[Request, Response] = endpoint(externalUrl)
-    .withHeader(
-      ("Access-Control-Allow-Origin", "*")
-    )
+    .withHeader(("Access-Control-Allow-Origin", "*"))
     .withHeader(
       ("Access-Control-Allow-Methods", "POST, GET, OPTIONS, DELETE, PATCH")
     )
-    .withHeader(
-      ("Access-Control-Max-Age", "3600")
-    )
-    .withHeader(
-      (
-        "Access-Control-Allow-Headers",
-        """Content-Type,
+    .withHeader(("Access-Control-Max-Age", "3600"))
+    .withHeader(("Access-Control-Allow-Headers", """Content-Type,
         |Cache-Control,
         |Content-Language,
         |Expires,
@@ -45,9 +38,7 @@ object Main extends TwitterServer with Endpoints with Config {
         |X-Requested-With,
         |Origin,
         |Accept
-      """.stripMargin.filter(_ >= ' ')
-      )
-    )
+      """.stripMargin.filter(_ >= ' ')))
     .toService
 
   def main(): Unit = {

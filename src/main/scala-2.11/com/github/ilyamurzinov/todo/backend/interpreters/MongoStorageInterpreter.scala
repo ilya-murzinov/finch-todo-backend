@@ -82,9 +82,7 @@ object MongoStorageInterpreter extends Config {
         case GetTodo(id: UUID) => {
           UtilBijections
             .twitter2ScalaFuture[Option[Todo]]
-            .invert(
-              collection.find(byId(id)).one[Todo]
-            )
+            .invert(collection.find(byId(id)).one[Todo])
         }
         case SaveTodo(todo: Todo) => {
           collection.insert[Todo](todo)
@@ -95,11 +93,7 @@ object MongoStorageInterpreter extends Config {
           Future.value(())
         }
         case DeleteAllTodos => {
-          UtilBijections
-            .twitter2ScalaFuture[Unit]
-            .invert(
-              collection.drop()
-            )
+          UtilBijections.twitter2ScalaFuture[Unit].invert(collection.drop())
         }
       }
   }

@@ -49,7 +49,8 @@ trait Endpoints {
           completed = false,
           order = 1,
           url = s"$baseUrl/todos/$id"
-        ))
+        )
+      )
     }
 
   def postTodo(externalUrl: String): TodoEndpoint[Todo] =
