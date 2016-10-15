@@ -18,7 +18,7 @@ import scala.util.{Failure, Success}
 /**
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object TodoInterpreter {
+class TodoInterpreter {
   private[this] val logicInterpreter: TodoAction ~> StorageF =
     new (TodoAction ~> StorageF) {
       override def apply[A](action: TodoAction[A]): StorageF[A] =
@@ -51,7 +51,7 @@ object TodoInterpreter {
         }
     }
 
-  val interpreter = (logicInterpreter andThen InMemoryStorageInterpreter.interpreter) or LoggingInterpreter.interpreter
+  val interpreter = (logicInterpreter andThen new InMemoryStorageInterpreter()) or new LoggingInterpreter()
 
   def interpret[T](action: Free[TodoApp, T]): Future[T] =
     action.foldMap(interpreter)

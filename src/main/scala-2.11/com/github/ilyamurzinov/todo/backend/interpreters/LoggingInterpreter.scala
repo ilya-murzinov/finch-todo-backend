@@ -15,14 +15,11 @@ import scala.util.{Failure, Success}
 /**
   * @author Murzinov Ilya [murz42@gmail.com]
   */
-object LoggingInterpreter {
-  val interpreter: LogAction ~> Future =
-    new (LogAction ~> Future) {
-      override def apply[A](action: LogAction[A]): Future[A] =
-        action match {
-          case Info(msg: String) =>
-            println(msg)
-            Future.value(())
-        }
+class LoggingInterpreter extends (LogAction ~> Future) {
+  override def apply[A](action: LogAction[A]): Future[A] =
+    action match {
+      case Info(msg: String) =>
+        println(msg)
+        Future.value(())
     }
 }

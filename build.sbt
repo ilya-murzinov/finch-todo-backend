@@ -3,6 +3,23 @@ name := "finch-todo-backend"
 version := "1.0"
 
 scalaVersion := "2.11.7"
+
+scalacOptions ++= Seq(
+  "-encoding",
+  "UTF-8",
+  "-deprecation",
+  "-feature",
+  "-unchecked",
+  "-Xlint",
+  "-language:higherKinds",
+  "-Ywarn-adapted-args",
+  "-Ywarn-dead-code",
+  "-Ywarn-inaccessible",
+  "-Ywarn-nullary-override",
+  "-Ywarn-numeric-widen",
+  "-Xfatal-warnings"
+)
+
 lazy val finchVersion = "0.11.0-M3"
 lazy val catsVersion = "0.7.2"
 lazy val circeVersion = "0.5.1"
@@ -22,7 +39,9 @@ libraryDependencies ++= Seq(
   "org.reactivemongo" %% "reactivemongo" % reactiveMongoVersion,
   "ch.qos.logback" % "logback-classic" % "1.1.2",
   "com.twitter" %% "bijection-util" % "0.8.1",
-  "com.typesafe" % "config" % "1.2.1"
+  "com.typesafe" % "config" % "1.2.1",
+  "org.scalatest" %% "scalatest" % "3.0.0" % "test",
+  "org.scalacheck" %% "scalacheck" % "1.13.2" % "test"
 )
 
 mainClass in (Compile, run) := Some(

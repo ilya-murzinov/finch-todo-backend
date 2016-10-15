@@ -72,12 +72,14 @@ trait Endpoints {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 
+  val t = new TodoInterpreter()
+
   def endpoint(externalUrl: String) =
-    getTodosEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
-      getTodoEndpoint.mapOutputAsync(TodoInterpreter.interpret) :+:
-        postTodo(externalUrl).mapOutputAsync(TodoInterpreter.interpret) :+:
-          deleteTodo.mapOutputAsync(TodoInterpreter.interpret) :+:
-            deleteTodos.mapOutputAsync(TodoInterpreter.interpret) :+:
-              patchTodo.mapOutputAsync(TodoInterpreter.interpret) :+:
+    getTodosEndpoint.mapOutputAsync(t.interpret) :+:
+      getTodoEndpoint.mapOutputAsync(t.interpret) :+:
+        postTodo(externalUrl).mapOutputAsync(t.interpret) :+:
+          deleteTodo.mapOutputAsync(t.interpret) :+:
+            deleteTodos.mapOutputAsync(t.interpret) :+:
+              patchTodo.mapOutputAsync(t.interpret) :+:
                 opts
 }

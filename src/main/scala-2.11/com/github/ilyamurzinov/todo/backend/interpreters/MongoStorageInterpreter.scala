@@ -93,7 +93,10 @@ object MongoStorageInterpreter extends Config {
           Future.value(())
         }
         case DeleteAllTodos => {
-          UtilBijections.twitter2ScalaFuture[Unit].invert(collection.drop())
+          UtilBijections
+            .twitter2ScalaFuture[Boolean]
+            .invert(collection.drop(true))
+          Future.value(())
         }
       }
   }
