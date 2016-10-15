@@ -11,6 +11,7 @@ package object dsl {
   type TodoF[T] = Free[TodoAction, T]
   type StorageF[T] = Free[StorageAction, T]
   type TodoApp[T] = Coproduct[TodoAction, LogAction, T]
+  type TodoAppF[T] = Free[TodoApp, T]
 
   implicit def logI[F[_]](implicit I: Inject[LogAction, F]): LogI[F] =
     new LogI[F]
