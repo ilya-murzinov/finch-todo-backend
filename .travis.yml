@@ -1,8 +1,15 @@
 language: scala
 sudo: false
 scala:
-  - 2.11.7
+  - 2.12.1
 jdk:
   - oraclejdk8
+before_cache:
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt -name "*.lock" -delete
+cache:
+  directories:
+    - $HOME/.ivy2/cache
+    - $HOME/.sbt/boot/
 script:
   - sbt ++$TRAVIS_SCALA_VERSION validate
