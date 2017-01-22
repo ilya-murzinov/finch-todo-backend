@@ -1,4 +1,8 @@
 #!/bin/bash
 
-cd $OPENSHIFT_REPO_DIR
-nohup java -jar -Denv=openshift target/finch-todo-backend.jar > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &
+export JAVA_HOME=/etc/alternatives/java_sdk_1.8.0
+export PATH=$JAVA_HOME/bin:$PATH
+
+cd $OPENSHIFT_REPO_DIR/target/universal
+tar xzvf finch-todo-backend-0.1.0.tgz
+finch-todo-backend-0.1.0/bin/finch-todo-backend -admin.port=':0' -Dhttp.externalUrl='http://diy-ilyamurzinov.rhcloud.com' -Dhttp.host=$OPENSHIFT_DIY_IP -Dhttp.port=$OPENSHIFT_DIY_PORT > ${OPENSHIFT_LOG_DIR}server.log 2>&1 &
