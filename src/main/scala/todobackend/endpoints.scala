@@ -6,23 +6,27 @@ import io.circe.generic.auto._
 import io.finch._
 import io.finch.circe._
 import io.finch.syntax._
-import shapeless.{::, HNil}
+import io.finch.syntax.scalaFutures._
 
-class Endpoints(baseUrl: String) {
+import scala.concurrent.{ExecutionContext, Future}
+
+class Endpoints(externalUrl: String)(implicit ec: ExecutionContext) {
 
   private[this] def toView(item: TodoItem): TodoItemView =
-    TodoItemView(item.id, item.title, item.completed, item.order, s"$baseUrl/todos/${item.id}")
+    TodoItemView(item.id, item.title, item.completed, item.order, s"$externalUrl/todos/${item.id}")
 
-  private[this] val getTodosEndpoint: Endpoint[List[TodoItem]] = get("todos") {
-    Ok(repo.getAllTodos)
+  private[this] val root = path("todos")
+
+  val getTodosEndpoint: Endpoint[List[TodoItem]] = get(root) {
+    repo.getAllTodos.map(Ok)
   }
 
-  private[this] val getEndpoint: Endpoint[TodoItem] =
-    get("todos" :: path[UUID]) { id: UUID =>
-      repo.getTodo(id).toLeft(TodoNotFound(id)).fold(Ok, NotFound)
+  val getEndpoint: Endpoint[TodoItem] =
+    get(root :: path[UUID]) { id: UUID =>
+      repo.getTodo(id).map(_.toLeft(TodoNotFound(id)).fold(Ok, NotFound))
     }
 
-  private[this] val postedTodo: Endpoint[TodoItem] =
+  val postedTodo: Endpoint[TodoItem] =
     jsonBody[TodoItem => TodoItem].map { f =>
       f(
         TodoItem(
@@ -34,35 +38,38 @@ class Endpoints(baseUrl: String) {
       )
     }
 
-  private[this] val postTodo: Endpoint[TodoItem] =
-    post("todos" :: postedTodo) { t: TodoItem =>
+  val postTodo: Endpoint[TodoItem] =
+    post(root :: postedTodo) { t: TodoItem =>
       repo.saveTodo(t)
       Ok(t)
     }
 
-  private[this] val patchedTodo: Endpoint[TodoItem => TodoItem] = jsonBody[TodoItem => TodoItem]
+  val patchTodo: Endpoint[TodoItem] = {
+    val patchedTodo: Endpoint[TodoItem => TodoItem] = jsonBody[TodoItem => TodoItem]
 
-  private[this] val patchTodo: Endpoint[TodoItem] =
-    patch("todos" :: path[UUID] :: patchedTodo).mapOutput {
-      case id :: pt :: HNil =>
-        val patched = repo.getTodo(id).map(pt)
-        patched.foreach(repo.saveTodo)
-        patched.toLeft(TodoNotFound(id)).fold(Ok, NotFound)
-    }
+    def handle(id: UUID, pt: TodoItem => TodoItem): Future[Output[TodoItem]] =
+      for {
+      patched <- repo.getTodo (id).map (_.map (pt) )
+      _ <- patched.fold (Future.unit) (repo.saveTodo)
+      } yield patched.toLeft (TodoNotFound (id) ).fold(Ok, NotFound)
 
-  private[this] val deleteTodo: Endpoint[TodoItem] = delete("todos" :: path[UUID]) { id: UUID =>
+    patch(root :: path[UUID] :: patchedTodo).apply(handle _)
+  }
+
+  val deleteTodo: Endpoint[TodoItem] = delete(root :: path[UUID]) { id: UUID =>
     val deleted = repo.getTodo(id)
     deleted.foreach(_ => repo.deleteTodo(id))
-    deleted.toLeft(TodoNotFound(id)).fold(Ok, NotFound)
+    deleted.map(_.toLeft(TodoNotFound(id)).fold(Ok, NotFound))
   }
 
-  private[this] val deleteTodos: Endpoint[List[TodoItem]] = delete("todos") {
-    val todos = repo.getAllTodos
-    repo.deleteAllTodos()
-    Ok(todos)
+  val deleteTodos: Endpoint[List[TodoItem]] = delete(root) {
+    for {
+      todos <- repo.getAllTodos
+      _ <- repo.deleteAllTodos()
+    } yield Ok(todos)
   }
 
-  private[this] val opts: Endpoint[Unit] = options(*) {
+  val opts: Endpoint[Unit] = options(*) {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 

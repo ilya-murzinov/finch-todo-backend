@@ -7,6 +7,7 @@ import io.circe.generic.auto._
 import io.finch.circe._
 
 object Main extends Config with Filters {
+  import scala.concurrent.ExecutionContext.Implicits.global
 
   val api: Service[Request, Response] =
     corsFilter.andThen(new Endpoints(externalUrl).apiEndpoint.toService)

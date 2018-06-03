@@ -8,6 +8,7 @@ object Dependencies {
   lazy val finchCirce = "com.github.finagle" %% "finch-circe" % finchVersion
   lazy val circe = "io.circe" %% "circe-generic" % circeVersion
   lazy val scalatest = "org.scalatest" %% "scalatest" % "3.0.0" % Test
+  lazy val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.0" % Test
 
-  val all = Seq(finch, finchCirce, circe, scalatest)
+  val all = Seq(finch, finchCirce, circe, scalatest, scalacheck)
 }
