@@ -4,13 +4,13 @@ import io.finch.Input
 import io.circe.generic.auto._
 import io.finch.circe._
 import org.scalatest._
-import org.scalatest.prop.PropertyChecks
+import org.scalatestplus.scalacheck._
 
 import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration.Duration
 
-class TodoEndpointsTests extends PropSpec with PropertyChecks with Matchers {
+class TodoEndpointsTests extends PropSpec with ScalaCheckPropertyChecks with Matchers {
   import gens._
 
   val externalUrl = "http://example.com"

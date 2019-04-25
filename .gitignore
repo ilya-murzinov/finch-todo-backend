@@ -1,6 +1,8 @@
 target/
 sbt/
 .idea*
+.metals
+.bloop
 
 *.iml
 *.class

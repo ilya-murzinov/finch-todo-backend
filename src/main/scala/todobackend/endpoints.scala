@@ -49,9 +49,9 @@ class Endpoints(externalUrl: String)(implicit ec: ExecutionContext) {
 
     def handle(id: UUID, pt: TodoItem => TodoItem): Future[Output[TodoItem]] =
       for {
-      patched <- repo.getTodo (id).map (_.map (pt) )
-      _ <- patched.fold (Future.unit) (repo.saveTodo)
-      } yield patched.toLeft (TodoNotFound (id) ).fold(Ok, NotFound)
+        patched <- repo.getTodo(id).map(_.map(pt))
+        _ <- patched.fold(Future.unit)(repo.saveTodo)
+      } yield patched.toLeft(TodoNotFound(id)).fold(Ok, NotFound)
 
     patch(root :: path[UUID] :: patchedTodo).apply(handle _)
   }
@@ -76,9 +76,9 @@ class Endpoints(externalUrl: String)(implicit ec: ExecutionContext) {
   val apiEndpoint =
     getTodosEndpoint.map(_.map(toView)) :+:
       getEndpoint.map(toView) :+:
-        postTodo.map(toView) :+:
-          deleteTodo.map(toView) :+:
-            deleteTodos.map(_.map(toView)) :+:
-              patchTodo.map(toView) :+:
-                opts
+      postTodo.map(toView) :+:
+      deleteTodo.map(toView) :+:
+      deleteTodos.map(_.map(toView)) :+:
+      patchTodo.map(toView) :+:
+      opts
 }
