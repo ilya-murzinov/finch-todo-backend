@@ -37,4 +37,5 @@ val validateCommands = List(
   "test:compile",
   "test"
 )
+
 addCommandAlias("validate", validateCommands.mkString(";", ";", ""))

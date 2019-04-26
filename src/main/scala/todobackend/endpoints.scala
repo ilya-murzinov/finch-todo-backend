@@ -1,84 +1,69 @@
 package todobackend
 
 import java.util.UUID
+import java.util.UUID.randomUUID
 
+import cats.effect.{ContextShift, IO}
 import io.circe.generic.auto._
 import io.finch._
 import io.finch.circe._
-import io.finch.syntax._
-import io.finch.syntax.scalaFutures._
 
-import scala.concurrent.{ExecutionContext, Future}
+case class TodoItemResponse(id: UUID, title: String, completed: Boolean, order: Int, url: String)
+case class CreateTodoItemRequest(title: String, completed: Option[Boolean], order: Option[Int])
 
-class Endpoints(externalUrl: String)(implicit ec: ExecutionContext) {
-
-  private[this] def toView(item: TodoItem): TodoItemView =
-    TodoItemView(item.id, item.title, item.completed, item.order, s"$externalUrl/todos/${item.id}")
+class Endpoints(externalUrl: String, repo: Repo)(
+  implicit S: ContextShift[IO]
+) extends Endpoint.Module[IO] {
 
   private[this] val root = path("todos")
 
-  val getTodosEndpoint: Endpoint[List[TodoItem]] = get(root) {
-    repo.getAllTodos.map(Ok)
+  val getTodosEndpoint: Endpoint[IO, List[TodoItem]] = get(root) {
+    repo.getAll.map(Ok)
   }
 
-  val getEndpoint: Endpoint[TodoItem] =
+  val getTodo: Endpoint[IO, TodoItem] =
     get(root :: path[UUID]) { id: UUID =>
-      repo.getTodo(id).map(_.toLeft(TodoNotFound(id)).fold(Ok, NotFound))
+      repo.get(id).map(_.fold(NotFound, Ok))
     }
 
-  val postedTodo: Endpoint[TodoItem] =
-    jsonBody[TodoItem => TodoItem].map { f =>
-      f(
+  val postTodo: Endpoint[IO, TodoItem] =
+    post(root :: jsonBody[CreateTodoItemRequest]) { t: CreateTodoItemRequest =>
+      repo.save(
         TodoItem(
-          id = UUID.randomUUID,
-          title = "",
-          completed = false,
-          order = 1
+          randomUUID(),
+          t.title,
+          t.completed.getOrElse(false),
+          t.order.getOrElse(0)
         )
-      )
+      ).map(Ok)
     }
 
-  val postTodo: Endpoint[TodoItem] =
-    post(root :: postedTodo) { t: TodoItem =>
-      repo.saveTodo(t)
-      Ok(t)
+  val patchTodo: Endpoint[IO, TodoItem] =
+    patch(root :: path[UUID] :: jsonBody[TodoItem => TodoItem]) { (id: UUID, updateFn: TodoItem => TodoItem) =>
+      repo.update(id, updateFn).map(_.fold(NotFound, Ok))
     }
 
-  val patchTodo: Endpoint[TodoItem] = {
-    val patchedTodo: Endpoint[TodoItem => TodoItem] = jsonBody[TodoItem => TodoItem]
-
-    def handle(id: UUID, pt: TodoItem => TodoItem): Future[Output[TodoItem]] =
-      for {
-        patched <- repo.getTodo(id).map(_.map(pt))
-        _ <- patched.fold(Future.unit)(repo.saveTodo)
-      } yield patched.toLeft(TodoNotFound(id)).fold(Ok, NotFound)
-
-    patch(root :: path[UUID] :: patchedTodo).apply(handle _)
+  val deleteTodo: Endpoint[IO, TodoItem] = delete(root :: path[UUID]) { id: UUID =>
+    repo.delete(id).map(_.fold(NotFound, Ok))
   }
 
-  val deleteTodo: Endpoint[TodoItem] = delete(root :: path[UUID]) { id: UUID =>
-    val deleted = repo.getTodo(id)
-    deleted.foreach(_ => repo.deleteTodo(id))
-    deleted.map(_.toLeft(TodoNotFound(id)).fold(Ok, NotFound))
+  val deleteTodos: Endpoint[IO, List[TodoItem]] = delete(root) {
+    repo.deleteAll().map(Ok)
   }
 
-  val deleteTodos: Endpoint[List[TodoItem]] = delete(root) {
-    for {
-      todos <- repo.getAllTodos
-      _ <- repo.deleteAllTodos()
-    } yield Ok(todos)
-  }
-
-  val opts: Endpoint[Unit] = options(*) {
+  val opts: Endpoint[IO, Unit] = options(empty) {
     NoContent[Unit].withHeader(("Allow", "POST, GET, OPTIONS, DELETE, PATCH"))
   }
 
   val apiEndpoint =
-    getTodosEndpoint.map(_.map(toView)) :+:
-      getEndpoint.map(toView) :+:
-      postTodo.map(toView) :+:
-      deleteTodo.map(toView) :+:
-      deleteTodos.map(_.map(toView)) :+:
-      patchTodo.map(toView) :+:
+    getTodosEndpoint.map(_.map(toResponse)) :+:
+      getTodo.map(toResponse) :+:
+      postTodo.map(toResponse) :+:
+      deleteTodo.map(toResponse) :+:
+      deleteTodos.map(_.map(toResponse)) :+:
+      patchTodo.map(toResponse) :+:
       opts
+
+  private[this] def toResponse(item: TodoItem): TodoItemResponse =
+    TodoItemResponse(item.id, item.title, item.completed, item.order, s"$externalUrl/todos/${item.id}")
 }

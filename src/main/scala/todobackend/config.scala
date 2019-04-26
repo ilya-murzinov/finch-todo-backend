@@ -1,8 +1,9 @@
 package todobackend
 
 trait Config {
+
   protected val host: String = prop("http.host", "localhost")
-  protected val port: Int = prop("http.port", "8081").toInt
+  protected val port: Int = prop("http.port", "8080").toInt
   protected val internalUrl: String = s"$host:$port"
   protected val externalUrl: String = prop("http.externalUrl", s"http://$host:$port")
 
