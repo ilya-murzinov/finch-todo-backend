@@ -39,3 +39,4 @@ val validateCommands = List(
 )
 
 addCommandAlias("validate", validateCommands.mkString(";", ";", ""))
+addCommandAlias("stage", ";clean;assembly")
