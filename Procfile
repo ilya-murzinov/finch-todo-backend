@@ -1,1 +1,1 @@
-web: java -jar -Dhttp.host=0.0.0.0 -Dhttp.port=$PORT target/scala-2.12/finch-todo-backend.jar
+web: ./run.sh
