@@ -1,7 +1,7 @@
 import sbt._
 
 object Dependencies {
-  lazy val finchVersion = "0.30.0"
+  lazy val finchVersion = "0.31.0"
   lazy val circeVersion = "0.11.1"
 
   lazy val finch = "com.github.finagle" %% "finchx-core" % finchVersion
