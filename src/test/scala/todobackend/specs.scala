@@ -10,9 +10,11 @@ import org.scalatestplus.scalacheck._
 import repository._
 
 import scala.concurrent.ExecutionContext
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.propspec.AnyPropSpec
 
 class TodoEndpointsTests
-  extends PropSpec
+  extends AnyPropSpec
     with ScalaCheckPropertyChecks
     with Matchers {
   import gens._

@@ -38,5 +38,14 @@ val validateCommands = List(
   "test"
 )
 
+lazy val deleteGarbage = taskKey[Unit]("deleteGarbage")
+
+deleteGarbage := {
+  import scala.reflect.io.Directory
+
+  val directory = new Directory(new File("target/streams"))
+  directory.deleteRecursively()
+}
+
 addCommandAlias("validate", validateCommands.mkString(";", ";", ""))
-addCommandAlias("stage", ";clean;assembly")
+addCommandAlias("stage", ";clean;assembly;deleteGarbage")
