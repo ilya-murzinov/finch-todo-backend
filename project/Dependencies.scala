@@ -9,7 +9,7 @@ object Dependencies {
   lazy val circe = "io.circe" %% "circe-generic" % circeVersion
   lazy val scalatest = "org.scalatest" %% "scalatest" % "3.1.0" % Test
   lazy val scalatestScalacheck = "org.scalatestplus" %% "scalatestplus-scalacheck" % "3.1.0.0-RC2" % Test
-  lazy val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.2" % Test
+  lazy val scalacheck = "org.scalacheck" %% "scalacheck" % "1.14.3" % Test
 
   val all = Seq(finch, finchCirce, circe, scalatest, scalatestScalacheck, scalacheck)
 }
