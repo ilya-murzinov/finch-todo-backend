@@ -4,7 +4,7 @@ lazy val root = project.in(file("."))
   .settings(Seq(
     name := "finch-todo-backend",
     version := "0.1.0",
-    scalaVersion := "2.12.8",
+    scalaVersion := "2.12.13",
     libraryDependencies ++= all,
     mainClass in (Compile, run) := Some("todobackend.Main"),
     mainClass in assembly := Some("todobackend.Main"),
